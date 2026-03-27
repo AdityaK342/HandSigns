@@ -9,6 +9,7 @@ mp_drawing = mp.solutions.drawing_utils #used for drawing hands landmarks
 hands = mp_hands.Hands() #intialize the hand tracking model
 
 #Helper function
+#This function returns the amount of fingers that are currently up based on the hand landmarks provided by MediaPipe.
 #pram --> hand_landmarks: the landmarks of the detected hand
 #returns --> the number of fingers that are up
 
@@ -30,6 +31,30 @@ def count_fingers(hand_landmarks):
 
     return fingers
 
+#Helper function
+#This function returns the basic sign langauge phrases. 
+#pram --> hand_landmarks: the landmarks of the detected hand
+#returns --> Sign Language gesture as a string (e.g., "FIST", "OPEN PALM", "PEACE", "THUMBS UP", "POINTING", or "UNKNOWN")
+def detect_gesture(hand_landmarks):
+    lm = hand_landmarks.landmark
+
+    fingers = count_fingers(hand_landmarks)
+
+    # basic rules
+    if fingers == 0:
+        return "FIST"
+    elif fingers == 5:
+        return "OPEN PALM"
+    elif fingers == 2:
+        return "PEACE"
+    elif fingers == 1:
+        # check if thumb specifically is up
+        if lm[4].x < lm[3].x:
+            return "THUMBS UP"
+        else:
+            return "POINTING"
+    
+    return "UNKNOWN"
 
 #opens camera feed --> use q to close
 cap = cv2.VideoCapture(0)
@@ -60,11 +85,17 @@ while True:
             mp_drawing.draw_landmarks(frame,hand_landmarks,mp_hands.HAND_CONNECTIONS)
             fingers = count_fingers(hand_landmarks)
 
-            print("Fingers:", fingers)   # quick debug
+            gesture = detect_gesture(hand_landmarks);
+
+            print("Hand Gesture:", gesture)
 
             # or display on screen
-            cv2.putText(frame, f"Fingers: {fingers}", (20, 50),
+            cv2.putText(frame, f"Hand Gesture: {gesture}", (20, 50),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+            
+            cv2.putText(frame, f"Fingers: {fingers}", (100, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+
 
     cv2.imshow("Camera Feed", frame)
 
